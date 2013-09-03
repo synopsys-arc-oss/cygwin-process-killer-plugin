@@ -27,8 +27,11 @@ import hudson.Extension;
 import hudson.util.ProcessKiller;
 import hudson.util.ProcessTree;
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.Writer;
 import org.apache.commons.lang.SystemUtils;
 
 /**
@@ -37,7 +40,7 @@ import org.apache.commons.lang.SystemUtils;
  */
 @Extension
 public class CygwinProcessKiller extends ProcessKiller {
-    private static final String CYGWIN_START_PREFIX="CYGWIN_*";    
+    private static final String CYGWIN_START_PREFIX="CYGWIN_";    
     
     @Override
     public boolean kill(ProcessTree.OSProcess process) throws IOException, InterruptedException {       
@@ -69,7 +72,17 @@ public class CygwinProcessKiller extends ProcessKiller {
     }
     
     public boolean doKill(ProcessTree.OSProcess process) throws IOException, InterruptedException {
-        
+        // Prepare kill script
+        File tmpFile = File.createTempFile("cygwin_process_killer_", ".sh");
+        Writer w = new FileWriter(tmpFile);
+        w.write(CygwinProcessKillerPlugin.Instance().getKillScript());
+        w.close();
+
+        // Execute
+        Runtime r = Runtime.getRuntime();
+        Process p = r.exec("sh " + tmpFile.getAbsolutePath());
+        p.waitFor();
+    
         return true;
     }
 }

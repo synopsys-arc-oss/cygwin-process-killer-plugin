@@ -8,7 +8,7 @@
 
     <groupId>com.synopsys.arc.jenkinsci</groupId>
     <artifactId>cygwin-process</artifactId>
-    <version>0.2-SNAPSHOT</version>
+    <version>0.1-SNAPSHOT</version>
     <name>Cygwin Process Killer</name>
     <description>Provides additional tool installers</description>
     <packaging>hpi</packaging>
