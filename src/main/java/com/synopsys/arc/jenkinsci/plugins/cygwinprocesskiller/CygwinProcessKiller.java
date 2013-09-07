@@ -44,7 +44,11 @@ public class CygwinProcessKiller extends ProcessKiller {
     
     @Override
     public boolean kill(ProcessTree.OSProcess process) throws IOException, InterruptedException {       
-       return isCygwin() ? doKill(process) : false;
+        if (!CygwinProcessKillerPlugin.Instance().isEnableProcessKiller()) {
+            return false;
+        }
+        
+        return isCygwin() ? doKill(process) : false;
     }
     
     /**

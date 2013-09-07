@@ -23,11 +23,21 @@
  */
 package com.synopsys.arc.jenkinsci.plugins.cygwinprocesskiller;
 
+import hudson.Functions;
 import hudson.Plugin;
+import hudson.model.Descriptor;
 import hudson.model.Hudson;
 import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.nio.CharBuffer;
+import javax.servlet.ServletException;
 import jenkins.model.Jenkins;
+import net.sf.json.JSONObject;
+import org.kohsuke.stapler.StaplerRequest;
 
 /**
  *
@@ -35,23 +45,42 @@ import jenkins.model.Jenkins;
  */
 public class CygwinProcessKillerPlugin extends Plugin {
 
+    private boolean enableProcessKiller;
     private static final String PLUGIN_NAME="cygwin-process";
+    private static final String SCRIPT_PATH="/plugin/"+PLUGIN_NAME+"/scripts/cygwin_killproc.bash";
+    private static final int MAX_SCRIPT_SIZE=8192;
+    
     transient String killScript;
 
     public String getKillScript() {
         return killScript;
+    }
+
+    public boolean isEnableProcessKiller() {
+        return enableProcessKiller;
     }
     
     public static CygwinProcessKillerPlugin Instance() {
         Plugin plugin = Jenkins.getInstance().getPlugin(CygwinProcessKillerPlugin.class);
         return plugin != null ? (CygwinProcessKillerPlugin)plugin : null;
     }
+
+    @Override
+    public void configure(StaplerRequest req, JSONObject formData) throws IOException, ServletException, Descriptor.FormException {
+        super.configure(req, formData); //To change body of generated methods, choose Tools | Templates.
+    }
     
     @Override
     public void postInitialize() throws Exception {
-        File file = new File(Hudson.getInstance().getRootUrl()+"plugin/"+PLUGIN_NAME+"/scripts/cygwin_killproc.sh");
-        if (file.exists()) {
-            
+        
+        InputStream istream = ClassLoader.getSystemResourceAsStream(Functions.getResourcePath()+SCRIPT_PATH);
+        if (istream != null) {
+            Reader reader = new InputStreamReader(istream);
+            CharBuffer buf = CharBuffer.allocate(MAX_SCRIPT_SIZE);
+            reader.read(buf);
+            killScript =  buf.toString();  
+        } else {
+            throw new IOException("Cannot find Cygwin process killer script");
         }
         //File rd = new File(g)
         //super.start();
