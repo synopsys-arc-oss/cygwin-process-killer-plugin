@@ -23,7 +23,6 @@
  */
 package com.synopsys.arc.jenkinsci.plugins.cygwinprocesskiller;
 
-import hudson.Extension;
 import hudson.tools.ToolInstallation;
 import hudson.tools.ToolInstaller;
 import hudson.tools.ToolInstallerDescriptor;

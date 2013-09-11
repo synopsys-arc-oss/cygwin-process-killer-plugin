@@ -26,9 +26,6 @@ package com.synopsys.arc.jenkinsci.plugins.cygwinprocesskiller;
 import hudson.Functions;
 import hudson.Plugin;
 import hudson.model.Descriptor;
-import hudson.model.Hudson;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -45,13 +42,14 @@ import org.kohsuke.stapler.StaplerRequest;
  */
 public class CygwinProcessKillerPlugin extends Plugin {
 
+    private String killScript;
     private boolean enableProcessKiller;
+    
     private static final String PLUGIN_NAME="cygwin-process";
     private static final String SCRIPT_PATH="/plugin/"+PLUGIN_NAME+"/scripts/cygwin_killproc.bash";
     private static final int MAX_SCRIPT_SIZE=8192;
     
-    transient String killScript;
-
+    
     public String getKillScript() {
         return killScript;
     }
@@ -67,11 +65,16 @@ public class CygwinProcessKillerPlugin extends Plugin {
 
     @Override
     public void configure(StaplerRequest req, JSONObject formData) throws IOException, ServletException, Descriptor.FormException {
-        super.configure(req, formData); //To change body of generated methods, choose Tools | Templates.
+        this.enableProcessKiller = formData.getBoolean("enableProcessKiller");
+        this.killScript = formData.getString("killScript");
+        save();
     }
     
     @Override
-    public void postInitialize() throws Exception {
+    public void postInitialize() throws Exception {     
+        if (killScript != null) {
+            return;
+        }
         
         InputStream istream = ClassLoader.getSystemResourceAsStream(Functions.getResourcePath()+SCRIPT_PATH);
         if (istream != null) {
@@ -79,11 +82,9 @@ public class CygwinProcessKillerPlugin extends Plugin {
             CharBuffer buf = CharBuffer.allocate(MAX_SCRIPT_SIZE);
             reader.read(buf);
             killScript =  buf.toString();  
-        } else {
+        } /*else {
             throw new IOException("Cannot find Cygwin process killer script");
-        }
-        //File rd = new File(g)
-        //super.start();
+        } */
     }
     
 }
