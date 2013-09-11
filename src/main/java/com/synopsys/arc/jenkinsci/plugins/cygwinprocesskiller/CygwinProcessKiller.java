@@ -46,7 +46,7 @@ import org.apache.commons.lang.SystemUtils;
 @Extension
 public class CygwinProcessKiller extends ProcessKiller {
     private static final String CYGWIN_START_PREFIX="CYGWIN_";  
-    private static final String CYGWIN_BINARY_PATH="/bin/";
+    private static final String CYGWIN_BINARY_PATH="\\bin\\";
     private static final Level KILLER_LOGGING_LEVEL=Level.WARNING;
     private static final String KILLER_LOGGER_NAME = "global";
 

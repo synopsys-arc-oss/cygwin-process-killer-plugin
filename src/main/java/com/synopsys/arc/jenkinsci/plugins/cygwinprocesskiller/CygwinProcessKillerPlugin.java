@@ -73,6 +73,11 @@ public class CygwinProcessKillerPlugin extends Plugin {
         save();
     }
     
+    @Override 
+    public void start() throws Exception {
+        super.load();
+    }
+    
     /*@Override
     public void postInitialize() throws Exception {     
         if (killScript != null) {
