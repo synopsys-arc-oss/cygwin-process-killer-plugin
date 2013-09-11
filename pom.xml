@@ -58,5 +58,13 @@
             <url>http://www.opensource.org/licenses/mit-license.php</url>
             <distribution>repo</distribution>
         </license>
-    </licenses>	
+    </licenses>
+    <dependencies>
+        <dependency>
+            <groupId>com.cloudbees.jenkins.plugins</groupId>
+            <artifactId>custom-tools-plugin</artifactId>
+            <version>0.3</version>
+            <type>jar</type>
+        </dependency>
+    </dependencies>
 </project>

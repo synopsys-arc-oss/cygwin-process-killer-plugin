@@ -23,28 +23,63 @@
  */
 package com.synopsys.arc.jenkinsci.plugins.cygwinprocesskiller;
 
-import hudson.tools.ToolInstallation;
-import hudson.tools.ToolInstaller;
-import hudson.tools.ToolInstallerDescriptor;
-import hudson.tools.ToolProperty;
-import java.util.List;
+import com.cloudbees.jenkins.plugins.customtools.CustomTool;
+import hudson.Extension;
+import hudson.FilePath;
+import hudson.Util;
+import hudson.model.Describable;
+import hudson.model.Descriptor;
+import hudson.model.Hudson;
+import hudson.model.Node;
+import java.io.File;
+import java.io.Serializable;
+import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
  *
  * @author Oleg Nenashev <nenashev@synopsys.com>, Synopsys Inc.
  */
-public class CygwinInstallation extends ToolInstallation {
-    
-    public CygwinInstallation(String name, String home, List<? extends ToolProperty<?>> properties) {
-        super(name, home, properties);
+public class CygwinInstallation implements Serializable, Describable<CygwinInstallation> {
+    private String name;
+
+    @DataBoundConstructor
+    public CygwinInstallation(String name) {
+        this.name = name;
     }
 
-    //@Extension
-    public static class DescriptorImpl extends ToolInstallerDescriptor<ToolInstaller> {
+    public String getName() {
+        return name;
+    }
+  
+    @Override
+    public Descriptor<CygwinInstallation> getDescriptor() {
+        return DESCRIPTOR;
+    }
+     
+    static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
+    
+    @Extension
+    public static class DescriptorImpl extends Descriptor<CygwinInstallation> {
 
         @Override
         public String getDisplayName() {
-            return "Cygwin"; 
-        }       
+            return "Cygwin Installation";
+        }
+        
+        public static CustomTool[] getCustomToolInstallations() {
+            return Hudson.getInstance().getDescriptorByType(CustomTool.DescriptorImpl.class).getInstallations();      
+        }
+    }
+    
+    public static FilePath getTmpDir(Node node) {
+        if (node == null) {
+            throw new IllegalArgumentException("must pass non-null node");
+        }
+        
+        FilePath root = node.getRootPath();
+        if (root == null) {
+            throw new IllegalArgumentException("Node " + node.getDisplayName() + " seems to be offline");
+        }
+        return root.child("cygwin_process_killer").child("tmp");
     }
 }

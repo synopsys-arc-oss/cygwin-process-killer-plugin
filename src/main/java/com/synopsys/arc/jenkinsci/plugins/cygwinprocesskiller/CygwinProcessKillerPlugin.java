@@ -23,14 +23,11 @@
  */
 package com.synopsys.arc.jenkinsci.plugins.cygwinprocesskiller;
 
-import hudson.Functions;
+import com.cloudbees.jenkins.plugins.customtools.CustomTool;
 import hudson.Plugin;
 import hudson.model.Descriptor;
+import hudson.model.Hudson;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.nio.CharBuffer;
 import javax.servlet.ServletException;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
@@ -44,6 +41,7 @@ public class CygwinProcessKillerPlugin extends Plugin {
 
     private String killScript;
     private boolean enableProcessKiller;
+    private CygwinInstallation cygwinInstallation;
     
     private static final String PLUGIN_NAME="cygwin-process";
     private static final String SCRIPT_PATH="/plugin/"+PLUGIN_NAME+"/scripts/cygwin_killproc.bash";
@@ -57,6 +55,10 @@ public class CygwinProcessKillerPlugin extends Plugin {
     public boolean isEnableProcessKiller() {
         return enableProcessKiller;
     }
+
+    public CygwinInstallation getCygwinInstallation() {
+        return cygwinInstallation;
+    }
     
     public static CygwinProcessKillerPlugin Instance() {
         Plugin plugin = Jenkins.getInstance().getPlugin(CygwinProcessKillerPlugin.class);
@@ -67,10 +69,11 @@ public class CygwinProcessKillerPlugin extends Plugin {
     public void configure(StaplerRequest req, JSONObject formData) throws IOException, ServletException, Descriptor.FormException {
         this.enableProcessKiller = formData.getBoolean("enableProcessKiller");
         this.killScript = formData.getString("killScript");
+        this.cygwinInstallation = req.bindJSON(CygwinInstallation.class, formData.getJSONObject("cygwinInstallation"));
         save();
     }
     
-    @Override
+    /*@Override
     public void postInitialize() throws Exception {     
         if (killScript != null) {
             return;
@@ -82,9 +85,27 @@ public class CygwinProcessKillerPlugin extends Plugin {
             CharBuffer buf = CharBuffer.allocate(MAX_SCRIPT_SIZE);
             reader.read(buf);
             killScript =  buf.toString();  
-        } /*else {
-            throw new IOException("Cannot find Cygwin process killer script");
-        } */
+        } 
+    } */
+    
+    public CygwinInstallation.DescriptorImpl getCygwinInstallationDescriptor() {
+        return CygwinInstallation.DESCRIPTOR;
     }
     
+    public CustomTool getToolInstallation() {
+        if (cygwinInstallation == null) {
+            return null;
+        }
+        
+        CustomTool.DescriptorImpl descriptor = (CustomTool.DescriptorImpl) Hudson.getInstance().getDescriptor(CustomTool.class);
+        CustomTool[] installations = descriptor.getInstallations();
+        for (CustomTool inst : installations) {
+            if (inst.getName().equals(cygwinInstallation.getName())) {
+                return inst;
+            }
+        }
+        
+        // Installation not found
+        return null;
+    }
 }

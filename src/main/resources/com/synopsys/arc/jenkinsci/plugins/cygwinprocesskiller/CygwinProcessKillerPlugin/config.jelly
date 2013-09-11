@@ -24,9 +24,17 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:sl="/hudson/plugins/sidebar_link">
   <f:section title="${%Cygwin process killer}" description="${%Configuration of the Cygwin Process Killer plugin}">
-    <f:entry title="${%Setup after creation}" field="enableProcessKiller">
-        <f:checkbox checked="${it.enableProcessKiller}" title="Enable the Cygwin Process killer"/>
+    <f:entry title="${%Enable killer}" field="enableProcessKiller">
+        <f:checkbox checked="${it.enableProcessKiller}" title="Enables the Cygwin Process Killer"/>
     </f:entry>
+    <f:optionalBlock name="cygwinInstallation" 
+                     title="${%Use Cygwin from a custom tool}"
+                     checked="${it.cygwinInstallation != null}">
+        <j:set var="descriptor" value="${it.cygwinInstallationDescriptor}"/>
+        <j:set var="instance" value="${it.cygwinInstallation}"/>
+        <st:include from="${descriptor}" page="${descriptor.configPage}"/>
+    </f:optionalBlock> 
+    
     <f:entry field="killScript" title="killScript">
         <f:textarea value="${it.killScript}"/>
     </f:entry>
