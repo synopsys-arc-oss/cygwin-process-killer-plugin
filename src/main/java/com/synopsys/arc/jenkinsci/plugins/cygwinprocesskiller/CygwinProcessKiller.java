@@ -24,6 +24,7 @@
 package com.synopsys.arc.jenkinsci.plugins.cygwinprocesskiller;
 
 import com.cloudbees.jenkins.plugins.customtools.CustomTool;
+import com.synopsys.arc.jenkinsci.plugins.cygwinprocesskiller.util.CygwinKillHelper;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.model.Computer;
@@ -32,12 +33,9 @@ import hudson.model.TaskListener;
 import hudson.util.LogTaskListener;
 import hudson.util.ProcessKiller;
 import hudson.util.ProcessTree;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.apache.commons.lang.SystemUtils;
 
 /**
  * Extension, which kills Cygwin processes.
@@ -45,8 +43,6 @@ import org.apache.commons.lang.SystemUtils;
  */
 @Extension
 public class CygwinProcessKiller extends ProcessKiller {
-    private static final String CYGWIN_START_PREFIX="CYGWIN_";  
-    private static final String CYGWIN_BINARY_PATH="\\bin\\";
     private static final Level KILLER_LOGGING_LEVEL=Level.WARNING;
     private static final String KILLER_LOGGER_NAME = "global";
 
@@ -57,62 +53,13 @@ public class CygwinProcessKiller extends ProcessKiller {
             return false;
         }
         
-        // Init vars
+        // Init variables
         TaskListener listener = new LogTaskListener(Logger.getLogger(KILLER_LOGGER_NAME), KILLER_LOGGING_LEVEL);
         Node currentNode = Computer.currentComputer().getNode();
-        
-        // Get Cygwin for killer
         CustomTool tool = plugin.getToolInstallation();
-             
-        return isCygwin() ? doKill(plugin, tool, currentNode, listener, process) : false;
-    }
-    
-    /**
-     * Check that Cygwin is available at the host
-     * @throws IOException
-     * @throws InterruptedException 
-     */
-    public boolean isCygwin() throws IOException, InterruptedException {
-        //
-        if (!SystemUtils.IS_OS_WINDOWS) {
-            return false;
-        }
         
-        Runtime r = Runtime.getRuntime();
-        Process p = r.exec("uname -a");
-        p.waitFor();
-    
-        BufferedReader b = new BufferedReader(new InputStreamReader(p.getInputStream()));
-
-        if (b.ready()) {
-            String output = b.readLine();
-            return output.startsWith(CYGWIN_START_PREFIX);
-        }
-        return false;
-    }
-    
-    public boolean doKill(CygwinProcessKillerPlugin plugin, CustomTool tool, Node node, TaskListener log, ProcessTree.OSProcess process) throws IOException, InterruptedException {
-        execScript(tool, node, log, plugin.getKillScript());
-        return true;
-    }
-    
-    public void execScript(CustomTool tool, Node node, TaskListener log, String script) 
-            throws IOException, InterruptedException {
-        
-        //
-        FilePath tmpDir = CygwinInstallation.getTmpDir(node);
-        FilePath tmpFile = tmpDir.createTempFile("cygwin_process_killer_", ".sh");     
-  
-        tmpFile.write(script, null);
-  
-        String[] cmd = new String[] {getCygwinBinaryCommand(tool, "sh"), };
-        int r = node.createLauncher(log).launch().cmds(cmd).stdout(log).pwd(tmpDir).join();
-        if (r != 0) {
-            throw new IOException("Command returned status " + r);
-        }
-    }
-    
-    public String getCygwinBinaryCommand(CustomTool tool, String commandName) {
-        return tool != null ? tool.getHome()+CYGWIN_BINARY_PATH+commandName+".exe" : commandName+".exe"; 
-    }   
+        // 
+        CygwinKillHelper helper = new CygwinKillHelper(listener, currentNode, tool);
+        return helper.isCygwin() ? helper.kill(process) : false;
+    }    
 }

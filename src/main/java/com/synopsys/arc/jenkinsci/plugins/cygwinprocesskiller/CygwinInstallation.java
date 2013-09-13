@@ -24,6 +24,8 @@
 package com.synopsys.arc.jenkinsci.plugins.cygwinprocesskiller;
 
 import com.cloudbees.jenkins.plugins.customtools.CustomTool;
+import com.cloudbees.jenkins.plugins.customtools.CustomToolInstallWrapper;
+import com.synopsys.arc.jenkinsci.plugins.customtools.multiconfig.MulticonfigWrapperOptions;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.model.Describable;
@@ -35,7 +37,7 @@ import java.io.Serializable;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
- *
+ * Provides integration with Custom-Tools plug-in.
  * @author Oleg Nenashev <nenashev@synopsys.com>, Synopsys Inc.
  */
 public class CygwinInstallation implements Serializable, Describable<CygwinInstallation> {
@@ -85,5 +87,12 @@ public class CygwinInstallation implements Serializable, Describable<CygwinInsta
             tmpDir.mkdirs();
         }
         return tmpDir;
+    }
+    
+    CustomToolInstallWrapper prepareInstallationWrapper() {
+        return new CustomToolInstallWrapper(
+                new CustomToolInstallWrapper.SelectedTool[]{
+                    new CustomToolInstallWrapper.SelectedTool(name)}, 
+                MulticonfigWrapperOptions.DEFAULT, true);
     }
 }
