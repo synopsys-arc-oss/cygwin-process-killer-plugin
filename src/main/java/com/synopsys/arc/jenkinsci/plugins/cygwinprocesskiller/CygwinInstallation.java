@@ -27,12 +27,9 @@ import com.cloudbees.jenkins.plugins.customtools.CustomTool;
 import com.cloudbees.jenkins.plugins.customtools.CustomToolInstallWrapper;
 import com.synopsys.arc.jenkinsci.plugins.customtools.multiconfig.MulticonfigWrapperOptions;
 import hudson.Extension;
-import hudson.FilePath;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
 import hudson.model.Hudson;
-import hudson.model.Node;
-import java.io.IOException;
 import java.io.Serializable;
 import org.kohsuke.stapler.DataBoundConstructor;
 
@@ -72,22 +69,7 @@ public class CygwinInstallation implements Serializable, Describable<CygwinInsta
         }
     }
     
-    public static FilePath getTmpDir(Node node) throws IOException, InterruptedException {
-        if (node == null) {
-            throw new IllegalArgumentException("must pass non-null node");
-        }
-        
-        FilePath root = node.getRootPath();
-        if (root == null) {
-            throw new IllegalArgumentException("Node " + node.getDisplayName() + " seems to be offline");
-        }
-        
-        FilePath tmpDir = root.child("cygwin_process_killer").child("tmp");
-        if (!tmpDir.exists()) {
-            tmpDir.mkdirs();
-        }
-        return tmpDir;
-    }
+    
     
     CustomToolInstallWrapper prepareInstallationWrapper() {
         return new CustomToolInstallWrapper(

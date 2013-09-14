@@ -26,7 +26,6 @@ package com.synopsys.arc.jenkinsci.plugins.cygwinprocesskiller;
 import com.cloudbees.jenkins.plugins.customtools.CustomTool;
 import com.synopsys.arc.jenkinsci.plugins.cygwinprocesskiller.util.CygwinKillHelper;
 import hudson.Extension;
-import hudson.FilePath;
 import hudson.model.Computer;
 import hudson.model.Node;
 import hudson.model.TaskListener;
