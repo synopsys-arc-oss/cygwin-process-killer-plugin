@@ -68,13 +68,4 @@ public class CygwinInstallation implements Serializable, Describable<CygwinInsta
             return Hudson.getInstance().getDescriptorByType(CustomTool.DescriptorImpl.class).getInstallations();      
         }
     }
-    
-    
-    
-    CustomToolInstallWrapper prepareInstallationWrapper() {
-        return new CustomToolInstallWrapper(
-                new CustomToolInstallWrapper.SelectedTool[]{
-                    new CustomToolInstallWrapper.SelectedTool(name)}, 
-                MulticonfigWrapperOptions.DEFAULT, true);
-    }
 }

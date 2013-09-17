@@ -24,13 +24,16 @@
 package com.synopsys.arc.jenkinsci.plugins.cygwinprocesskiller.util;
 
 import com.cloudbees.jenkins.plugins.customtools.CustomTool;
+import com.cloudbees.jenkins.plugins.customtools.CustomToolInstallWrapper;
+import com.synopsys.arc.jenkinsci.plugins.customtools.multiconfig.MulticonfigWrapperOptions;
 import com.synopsys.arc.jenkinsci.plugins.cygwinprocesskiller.CygwinProcessKillerPlugin;
 import hudson.FilePath;
+import hudson.Launcher;
 import hudson.Launcher.ProcStarter;
 import hudson.Proc;
 import hudson.model.Node;
+import hudson.model.StreamBuildListener;
 import hudson.model.TaskListener;
-import hudson.util.NullStream;
 import hudson.util.ProcessTree;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -143,5 +146,17 @@ public class CygwinKillHelper {
         return tmpDir;
     }
     
+    public Launcher prepareLauncher() throws IOException, InterruptedException {
+        Launcher launcher = node.createLauncher(log);
+        if (tool != null) {
+            CustomToolInstallWrapper wrapper = new CustomToolInstallWrapper(
+                new CustomToolInstallWrapper.SelectedTool[]{
+                    new CustomToolInstallWrapper.SelectedTool(tool.getName())}, 
+                MulticonfigWrapperOptions.DEFAULT, true);
+            return wrapper.decorateLauncher(Stubs.getBuildStub(), launcher, new StreamBuildListener(log.getLogger()));
+        } else {
+            return launcher;
+        }      
+    }
     
 }
