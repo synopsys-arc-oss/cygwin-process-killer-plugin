@@ -21,49 +21,30 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.synopsys.arc.jenkinsci.plugins.cygwinprocesskiller;
+package com.synopsys.arc.jenkinsci.plugins.cygwinprocesskiller.util;
 
 import com.cloudbees.jenkins.plugins.customtools.CustomTool;
-import hudson.Extension;
-import hudson.model.Describable;
-import hudson.model.Descriptor;
-import hudson.model.Hudson;
-import java.io.Serializable;
-import org.kohsuke.stapler.DataBoundConstructor;
+import com.synopsys.arc.jenkinsci.plugins.customtools.CustomToolException;
+import com.synopsys.arc.jenkinsci.plugins.customtools.EnvStringParseHelper;
+import hudson.EnvVars;
+import hudson.FilePath;
+import hudson.model.Node;
+import java.io.File;
 
 /**
- * Provides integration with Custom-Tools plug-in.
+ *
  * @author Oleg Nenashev <nenashev@synopsys.com>, Synopsys Inc.
  */
-public class CygwinInstallation implements Serializable, Describable<CygwinInstallation> {
-    private String name;
-
-    @DataBoundConstructor
-    public CygwinInstallation(String name) {
-        this.name = name;
-    }
-
-    public String getName() {
-        return name;
-    }
-  
-    @Override
-    public Descriptor<CygwinInstallation> getDescriptor() {
-        return DESCRIPTOR;
-    }
-     
-    static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
-    
-    @Extension
-    public static class DescriptorImpl extends Descriptor<CygwinInstallation> {
-
-        @Override
-        public String getDisplayName() {
-            return "Cygwin Installation";
+public class CygwinToolHelper {
+    public static FilePath getCygwinHome(CustomTool tool, Node node, EnvVars additionalVars) 
+            throws CustomToolException
+    {
+        String home = EnvStringParseHelper.resolveExportedPath(tool.getHome(), node);
+        if (additionalVars != null && additionalVars.size() != 0) {
+            home = additionalVars.expand(home);
         }
-        
-        public static CustomTool[] getCustomToolInstallations() {
-            return Hudson.getInstance().getDescriptorByType(CustomTool.DescriptorImpl.class).getInstallations();      
-        }
+        EnvStringParseHelper.checkStringForMacro("CYGWIN_HOME", home);
+        return new FilePath(new File(home));
     }
+            
 }

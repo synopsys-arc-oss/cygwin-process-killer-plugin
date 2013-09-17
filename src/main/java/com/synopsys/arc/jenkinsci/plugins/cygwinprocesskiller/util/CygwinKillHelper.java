@@ -24,17 +24,19 @@
 package com.synopsys.arc.jenkinsci.plugins.cygwinprocesskiller.util;
 
 import com.cloudbees.jenkins.plugins.customtools.CustomTool;
-import com.cloudbees.jenkins.plugins.customtools.CustomToolInstallWrapper;
-import com.synopsys.arc.jenkinsci.plugins.customtools.multiconfig.MulticonfigWrapperOptions;
+import com.cloudbees.jenkins.plugins.customtools.DecoratedLauncher;
+import com.synopsys.arc.jenkinsci.plugins.customtools.CustomToolException;
 import com.synopsys.arc.jenkinsci.plugins.cygwinprocesskiller.CygwinProcessKillerPlugin;
+import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.Launcher.ProcStarter;
 import hudson.Proc;
+import hudson.Util;
 import hudson.model.Node;
-import hudson.model.StreamBuildListener;
 import hudson.model.TaskListener;
 import hudson.util.ProcessTree;
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.concurrent.TimeUnit;
@@ -49,7 +51,9 @@ public class CygwinKillHelper {
     private final TaskListener log;
     private final Node node;
     private final CustomTool tool;
-    
+    ProcessTree.OSProcess procToBeKilled;
+    private final String jobName;
+    private final String buildNumber;
     
     //
     private final CygwinProcessKillerPlugin plugin = CygwinProcessKillerPlugin.Instance();
@@ -59,10 +63,19 @@ public class CygwinKillHelper {
     private static final String CYGWIN_BINARY_PATH="\\bin\\";
     private static final int WAIT_TIMEOUT_SEC=500;
     
-    public CygwinKillHelper(TaskListener log, Node node, CustomTool tool) {
+    public CygwinKillHelper(TaskListener log, Node node, CustomTool tool, ProcessTree.OSProcess procToBeKilled) {
         this.log = log;
         this.node = node;
         this.tool = tool;
+        this.procToBeKilled = procToBeKilled;
+        
+        // Extract info about the current build
+        this.jobName = procToBeKilled.getEnvironmentVariables().get("JOB_NAME");
+        this.buildNumber = procToBeKilled.getEnvironmentVariables().get("BUILD_NUMBER");
+    }
+    
+    public final boolean killsJobProcess() {
+        return jobName != null && buildNumber != null;
     }
     
     /**
@@ -108,19 +121,19 @@ public class CygwinKillHelper {
         cmd[0] = getCygwinBinaryCommand(command);
         System.arraycopy(args, 0, cmd, 1, args.length);
     
-        ProcStarter starter = node.createLauncher(log).launch().cmds(cmd).stdout(stdout).pwd(getTmpDir());
+        ProcStarter starter = prepareLauncher().launch().cmds(cmd).stdout(stdout).pwd(getTmpDir());
         Proc proc = starter.start();
         int resultCode = proc.joinWithTimeout(WAIT_TIMEOUT_SEC, TimeUnit.SECONDS, log);
         starter.readStdout();
         return resultCode;
     }
     
-    public boolean kill(ProcessTree.OSProcess process) throws IOException, InterruptedException {
+    public boolean kill() throws IOException, InterruptedException {
         OutputStream str = new ByteArrayOutputStream();
-        int res = execScript(plugin.getKillScript(), str, Integer.toString(process.getPid()));
+        int res = execScript(plugin.getKillScript(), str, Integer.toString(procToBeKilled.getPid()));
         
         if (res != 0) {
-            log.error("CygwinKiller cannot kill the process tree (parent pid="+process.getPid()+")");
+            log.error("CygwinKiller cannot kill the process tree (parent pid="+procToBeKilled.getPid()+")");
         }
         return res != 0;
     }
@@ -149,11 +162,37 @@ public class CygwinKillHelper {
     public Launcher prepareLauncher() throws IOException, InterruptedException {
         Launcher launcher = node.createLauncher(log);
         if (tool != null) {
-            CustomToolInstallWrapper wrapper = new CustomToolInstallWrapper(
-                new CustomToolInstallWrapper.SelectedTool[]{
-                    new CustomToolInstallWrapper.SelectedTool(tool.getName())}, 
-                MulticonfigWrapperOptions.DEFAULT, true);
-            return wrapper.decorateLauncher(Stubs.getBuildStub(), launcher, new StreamBuildListener(log.getLogger()));
+            // Get tool home
+            final FilePath homePath;
+            try {
+                homePath = CygwinToolHelper.getCygwinHome(tool, node, procToBeKilled.getEnvironmentVariables());
+            } catch (CustomToolException ex) {
+                String msg = "Cannot install Cygwin from Custom Tools. "+ex.getMessage();
+                log.error(msg);
+                throw new IOException(msg, ex);
+            }
+            
+            return new DecoratedLauncher(launcher) {
+
+                @Override
+                public Proc launch(ProcStarter starter) throws IOException {
+                    EnvVars vars = toEnvVars(starter.envs());
+            
+                    String overridenPaths = homePath.child("bin").getRemote()+File.pathSeparator+homePath.child("lib").getRemote()+File.pathSeparator+vars.get("PATH");
+                    vars.override("PATH", overridenPaths);
+                    vars.put("CYGWIN_HOME", homePath.getRemote());
+                    
+                    return super.launch(starter.envs(Util.mapToEnv(vars)));
+                }
+                
+                private EnvVars toEnvVars(String[] envs) {
+                    EnvVars vars = new EnvVars();
+                    for (String line : envs) {
+                        vars.addLine(line);
+                    }
+                    return vars;
+                }
+            };
         } else {
             return launcher;
         }      

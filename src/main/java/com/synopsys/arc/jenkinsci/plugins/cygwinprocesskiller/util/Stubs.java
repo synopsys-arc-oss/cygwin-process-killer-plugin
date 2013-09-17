@@ -70,17 +70,15 @@ public class Stubs {
 
         
     }
-    
-    
-    
+      
     private static class BuildStub extends AbstractBuild<ProjectStub, BuildStub> {
         public BuildStub(ProjectStub project) throws IOException {
             super(project);
         }
         
+        
+        
         @Override
-        public void run() {
-            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-        }
+        public void run() { }
     }  
 }

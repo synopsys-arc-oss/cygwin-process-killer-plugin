@@ -58,7 +58,7 @@ public class CygwinProcessKiller extends ProcessKiller {
         CustomTool tool = plugin.getToolInstallation();
         
         // 
-        CygwinKillHelper helper = new CygwinKillHelper(listener, currentNode, tool);
-        return helper.isCygwin() ? helper.kill(process) : false;
+        CygwinKillHelper helper = new CygwinKillHelper(listener, currentNode, tool, process);
+        return helper.isCygwin() ? helper.kill() : false;
     }    
 }
