@@ -34,7 +34,7 @@ import net.sf.json.JSONObject;
 import org.kohsuke.stapler.StaplerRequest;
 
 /**
- *
+ * Cygwin Process Killer plugin.
  * @author Oleg Nenashev <nenashev@synopsys.com>, Synopsys Inc.
  */
 public class CygwinProcessKillerPlugin extends Plugin {

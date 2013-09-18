@@ -49,17 +49,13 @@ public class CygwinKillHelper {
     private final TaskListener log;
     private final Node node;
     private final CustomTool tool;
-    ProcessTree.OSProcess procToBeKilled;
-    private final String jobName;
-    private final String buildNumber;
-    
-    
-    
-    //
-    private final CygwinProcessKillerPlugin plugin = CygwinProcessKillerPlugin.Instance();
+    private final ProcessTree.OSProcess procToBeKilled;
+  
+    // On-demand variables 
     private FilePath tmpDir;
     private FilePath substitutedHome;
     
+    private final CygwinProcessKillerPlugin plugin = CygwinProcessKillerPlugin.Instance();
     private static final String CYGWIN_START_PREFIX="CYGWIN_";  
     private static final String CYGWIN_BINARY_PATH="\\bin\\";
     private static final int WAIT_TIMEOUT_SEC=500;
@@ -70,30 +66,20 @@ public class CygwinKillHelper {
         this.tool = tool;
         this.procToBeKilled = procToBeKilled;
         this.substitutedHome = this.tmpDir = null; // will be constructed on-demand
-        
-        // Extract info about the current build
-        this.jobName = procToBeKilled.getEnvironmentVariables().get("JOB_NAME");
-        this.buildNumber = procToBeKilled.getEnvironmentVariables().get("BUILD_NUMBER");
-    }
-    
-    public final boolean killsJobProcess() {
-        return jobName != null && buildNumber != null;
     }
     
     /**
-     * Checks that Cygwin is available at the host.
+     * Checks that Cygwin is available on the host.
      * @throws IOException
      * @throws InterruptedException 
      */
     public boolean isCygwin() throws IOException, InterruptedException {
-        //
         if (!SystemUtils.IS_OS_WINDOWS) {
             return false;
         }
         
         OutputStream str = new ByteArrayOutputStream();
         execCommand("uname", str, "-a");
- 
         return str.toString().startsWith(CYGWIN_START_PREFIX);
     }
 
@@ -140,11 +126,11 @@ public class CygwinKillHelper {
         return res != 0;
     }
     
-    public String getCygwinBinaryCommand(String commandName) throws IOException {
+    private String getCygwinBinaryCommand(String commandName) throws IOException {
         return tool != null ? getSubstitutedHome().getRemote() +CYGWIN_BINARY_PATH+commandName+".exe" : commandName+".exe"; 
     }
     
-    public static FilePath findTmpDir(Node node) throws IOException, InterruptedException {
+    private static FilePath findTmpDir(Node node) throws IOException, InterruptedException {
         if (node == null) {
             throw new IllegalArgumentException("must pass non-null node");
         }
@@ -161,7 +147,7 @@ public class CygwinKillHelper {
         return tmpDir;
     }
     
-    public Map<String,String> constructVariables() throws IOException, InterruptedException {
+    private Map<String,String> constructVariables() throws IOException, InterruptedException {
         Map<String,String> envVars = new TreeMap<String, String>();
         if (tool != null) {
             FilePath homePath = getSubstitutedHome();   
@@ -175,21 +161,15 @@ public class CygwinKillHelper {
 
     public FilePath getSubstitutedHome() throws IOException {
         if (substitutedHome == null && tool != null) {
-            // Get tool home
-            final FilePath homePath;
             try {
-                homePath = CygwinToolHelper.getCygwinHome(tool, node, procToBeKilled.getEnvironmentVariables());
+                substitutedHome = CygwinToolHelper.getCygwinHome(tool, node, procToBeKilled.getEnvironmentVariables());
             } catch (CustomToolException ex) {
                 String msg = "Cannot install Cygwin from Custom Tools. "+ex.getMessage();
                 log.error(msg);
                 throw new IOException(msg, ex);
             }
-            substitutedHome = homePath;
         }
-        
+    
         return substitutedHome;
-    }
-    
-    
-    
+    }    
 }

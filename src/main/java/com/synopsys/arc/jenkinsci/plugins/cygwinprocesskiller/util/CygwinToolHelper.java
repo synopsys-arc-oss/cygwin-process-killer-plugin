@@ -45,6 +45,5 @@ public class CygwinToolHelper {
         }
         EnvStringParseHelper.checkStringForMacro("CYGWIN_HOME", home);
         return new FilePath(new File(home));
-    }
-            
+    }           
 }

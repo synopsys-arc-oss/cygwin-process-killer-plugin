@@ -37,7 +37,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Extension, which kills Cygwin processes.
+ * Extension, which kills Cygwin process trees.
  * @author Oleg Nenashev <nenashev@synopsys.com>, Synopsys Inc.
  */
 @Extension
@@ -57,7 +57,7 @@ public class CygwinProcessKiller extends ProcessKiller {
         Node currentNode = Computer.currentComputer().getNode();
         CustomTool tool = plugin.getToolInstallation();
         
-        // 
+        // Run helper, which checks platform and then runs kill script
         CygwinKillHelper helper = new CygwinKillHelper(listener, currentNode, tool, process);
         return helper.isCygwin() ? helper.kill() : false;
     }    
