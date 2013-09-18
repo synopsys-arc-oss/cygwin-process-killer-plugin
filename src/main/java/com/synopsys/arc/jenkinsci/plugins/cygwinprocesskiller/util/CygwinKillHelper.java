@@ -24,21 +24,19 @@
 package com.synopsys.arc.jenkinsci.plugins.cygwinprocesskiller.util;
 
 import com.cloudbees.jenkins.plugins.customtools.CustomTool;
-import com.cloudbees.jenkins.plugins.customtools.DecoratedLauncher;
 import com.synopsys.arc.jenkinsci.plugins.customtools.CustomToolException;
 import com.synopsys.arc.jenkinsci.plugins.cygwinprocesskiller.CygwinProcessKillerPlugin;
-import hudson.EnvVars;
 import hudson.FilePath;
-import hudson.Launcher;
 import hudson.Launcher.ProcStarter;
 import hudson.Proc;
-import hudson.Util;
 import hudson.model.Node;
 import hudson.model.TaskListener;
 import hudson.util.ProcessTree;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.commons.lang.SystemUtils;
@@ -55,9 +53,12 @@ public class CygwinKillHelper {
     private final String jobName;
     private final String buildNumber;
     
+    
+    
     //
     private final CygwinProcessKillerPlugin plugin = CygwinProcessKillerPlugin.Instance();
     private FilePath tmpDir;
+    private FilePath substitutedHome;
     
     private static final String CYGWIN_START_PREFIX="CYGWIN_";  
     private static final String CYGWIN_BINARY_PATH="\\bin\\";
@@ -68,6 +69,7 @@ public class CygwinKillHelper {
         this.node = node;
         this.tool = tool;
         this.procToBeKilled = procToBeKilled;
+        this.substitutedHome = this.tmpDir = null; // will be constructed on-demand
         
         // Extract info about the current build
         this.jobName = procToBeKilled.getEnvironmentVariables().get("JOB_NAME");
@@ -121,7 +123,7 @@ public class CygwinKillHelper {
         cmd[0] = getCygwinBinaryCommand(command);
         System.arraycopy(args, 0, cmd, 1, args.length);
     
-        ProcStarter starter = prepareLauncher().launch().cmds(cmd).stdout(stdout).pwd(getTmpDir());
+        ProcStarter starter = node.createLauncher(log).launch().cmds(cmd).envs(constructVariables()).stdout(stdout).pwd(getTmpDir());
         Proc proc = starter.start();
         int resultCode = proc.joinWithTimeout(WAIT_TIMEOUT_SEC, TimeUnit.SECONDS, log);
         starter.readStdout();
@@ -138,8 +140,8 @@ public class CygwinKillHelper {
         return res != 0;
     }
     
-    public String getCygwinBinaryCommand(String commandName) {
-        return tool != null ? tool.getHome()+CYGWIN_BINARY_PATH+commandName+".exe" : commandName+".exe"; 
+    public String getCygwinBinaryCommand(String commandName) throws IOException {
+        return tool != null ? getSubstitutedHome().getRemote() +CYGWIN_BINARY_PATH+commandName+".exe" : commandName+".exe"; 
     }
     
     public static FilePath findTmpDir(Node node) throws IOException, InterruptedException {
@@ -159,9 +161,20 @@ public class CygwinKillHelper {
         return tmpDir;
     }
     
-    public Launcher prepareLauncher() throws IOException, InterruptedException {
-        Launcher launcher = node.createLauncher(log);
+    public Map<String,String> constructVariables() throws IOException, InterruptedException {
+        Map<String,String> envVars = new TreeMap<String, String>();
         if (tool != null) {
+            FilePath homePath = getSubstitutedHome();   
+            String overridenPaths = homePath.child("bin").getRemote()+File.pathSeparator+homePath.child("lib").getRemote();
+            envVars.put("PATH", overridenPaths);
+            envVars.put("CYGWIN_HOME", homePath.getRemote());
+        } 
+        
+        return envVars;
+    }
+
+    public FilePath getSubstitutedHome() throws IOException {
+        if (substitutedHome == null && tool != null) {
             // Get tool home
             final FilePath homePath;
             try {
@@ -171,31 +184,12 @@ public class CygwinKillHelper {
                 log.error(msg);
                 throw new IOException(msg, ex);
             }
-            
-            return new DecoratedLauncher(launcher) {
-
-                @Override
-                public Proc launch(ProcStarter starter) throws IOException {
-                    EnvVars vars = toEnvVars(starter.envs());
-            
-                    String overridenPaths = homePath.child("bin").getRemote()+File.pathSeparator+homePath.child("lib").getRemote()+File.pathSeparator+vars.get("PATH");
-                    vars.override("PATH", overridenPaths);
-                    vars.put("CYGWIN_HOME", homePath.getRemote());
-                    
-                    return super.launch(starter.envs(Util.mapToEnv(vars)));
-                }
-                
-                private EnvVars toEnvVars(String[] envs) {
-                    EnvVars vars = new EnvVars();
-                    for (String line : envs) {
-                        vars.addLine(line);
-                    }
-                    return vars;
-                }
-            };
-        } else {
-            return launcher;
-        }      
+            substitutedHome = homePath;
+        }
+        
+        return substitutedHome;
     }
+    
+    
     
 }
