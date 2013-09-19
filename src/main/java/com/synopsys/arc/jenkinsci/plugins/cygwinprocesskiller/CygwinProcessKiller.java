@@ -23,12 +23,12 @@
  */
 package com.synopsys.arc.jenkinsci.plugins.cygwinprocesskiller;
 
-import com.cloudbees.jenkins.plugins.customtools.CustomTool;
 import com.synopsys.arc.jenkinsci.plugins.cygwinprocesskiller.util.CygwinKillHelper;
 import hudson.Extension;
 import hudson.model.Computer;
 import hudson.model.Node;
 import hudson.model.TaskListener;
+import hudson.tools.ToolInstallation;
 import hudson.util.LogTaskListener;
 import hudson.util.ProcessKiller;
 import hudson.util.ProcessTree;
@@ -42,7 +42,7 @@ import java.util.logging.Logger;
  */
 @Extension
 public class CygwinProcessKiller extends ProcessKiller {
-    private static final Level KILLER_LOGGING_LEVEL=Level.WARNING;
+    private static final Level KILLER_LOGGING_LEVEL = Level.WARNING;
     private static final String KILLER_LOGGER_NAME = "global";
 
     @Override
@@ -55,7 +55,7 @@ public class CygwinProcessKiller extends ProcessKiller {
         // Init variables
         TaskListener listener = new LogTaskListener(Logger.getLogger(KILLER_LOGGER_NAME), KILLER_LOGGING_LEVEL);
         Node currentNode = Computer.currentComputer().getNode();
-        CustomTool tool = plugin.getToolInstallation();
+        ToolInstallation tool = plugin.getToolInstallation();
         
         // Run helper, which checks platform and then runs kill script
         CygwinKillHelper helper = new CygwinKillHelper(listener, currentNode, tool, process);

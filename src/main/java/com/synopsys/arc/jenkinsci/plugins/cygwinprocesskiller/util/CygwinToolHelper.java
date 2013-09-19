@@ -29,6 +29,7 @@ import com.synopsys.arc.jenkinsci.plugins.customtools.EnvStringParseHelper;
 import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.model.Node;
+import hudson.tools.ToolInstallation;
 import java.io.File;
 
 /**
@@ -36,7 +37,7 @@ import java.io.File;
  * @author Oleg Nenashev <nenashev@synopsys.com>, Synopsys Inc.
  */
 public class CygwinToolHelper {
-    public static FilePath getCygwinHome(CustomTool tool, Node node, EnvVars additionalVars) 
+    public static FilePath getCygwinHome(ToolInstallation tool, Node node, EnvVars additionalVars) 
             throws CustomToolException
     {
         String home = EnvStringParseHelper.resolveExportedPath(tool.getHome(), node);

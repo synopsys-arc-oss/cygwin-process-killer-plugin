@@ -23,7 +23,6 @@
  */
 package com.synopsys.arc.jenkinsci.plugins.cygwinprocesskiller.util;
 
-import com.cloudbees.jenkins.plugins.customtools.CustomTool;
 import com.synopsys.arc.jenkinsci.plugins.customtools.CustomToolException;
 import com.synopsys.arc.jenkinsci.plugins.cygwinprocesskiller.CygwinProcessKillerPlugin;
 import hudson.FilePath;
@@ -31,6 +30,7 @@ import hudson.Launcher.ProcStarter;
 import hudson.Proc;
 import hudson.model.Node;
 import hudson.model.TaskListener;
+import hudson.tools.ToolInstallation;
 import hudson.util.ProcessTree;
 import java.io.File;
 import java.io.IOException;
@@ -48,7 +48,7 @@ import org.apache.commons.lang.SystemUtils;
 public class CygwinKillHelper {
     private final TaskListener log;
     private final Node node;
-    private final CustomTool tool;
+    private final ToolInstallation tool;
     private final ProcessTree.OSProcess procToBeKilled;
   
     // On-demand variables 
@@ -60,12 +60,12 @@ public class CygwinKillHelper {
     private static final String CYGWIN_BINARY_PATH="\\bin\\";
     private static final int WAIT_TIMEOUT_SEC=500;
     
-    public CygwinKillHelper(TaskListener log, Node node, CustomTool tool, ProcessTree.OSProcess procToBeKilled) {
+    public CygwinKillHelper(TaskListener log, Node node, ToolInstallation tool, ProcessTree.OSProcess procToBeKilled) {
         this.log = log;
         this.node = node;
         this.tool = tool;
         this.procToBeKilled = procToBeKilled;
-        this.substitutedHome = this.tmpDir = null; // will be constructed on-demand
+        this.substitutedHome = this.tmpDir = null; // will be retrieved on-demand
     }
     
     /**
@@ -127,12 +127,12 @@ public class CygwinKillHelper {
     }
     
     private String getCygwinBinaryCommand(String commandName) throws IOException {
-        return tool != null ? getSubstitutedHome().getRemote() +CYGWIN_BINARY_PATH+commandName+".exe" : commandName+".exe"; 
+        return tool != null ? getSubstitutedHome().getRemote() + CYGWIN_BINARY_PATH + commandName+".exe" : commandName+".exe"; 
     }
     
     private static FilePath findTmpDir(Node node) throws IOException, InterruptedException {
         if (node == null) {
-            throw new IllegalArgumentException("must pass non-null node");
+            throw new IllegalArgumentException("Must pass non-null node");
         }
         
         FilePath root = node.getRootPath();
@@ -154,8 +154,7 @@ public class CygwinKillHelper {
             String overridenPaths = homePath.child("bin").getRemote()+File.pathSeparator+homePath.child("lib").getRemote();
             envVars.put("PATH", overridenPaths);
             envVars.put("CYGWIN_HOME", homePath.getRemote());
-        } 
-        
+        }      
         return envVars;
     }
 
@@ -168,8 +167,7 @@ public class CygwinKillHelper {
                 log.error(msg);
                 throw new IOException(msg, ex);
             }
-        }
-    
+        } 
         return substitutedHome;
     }    
 }

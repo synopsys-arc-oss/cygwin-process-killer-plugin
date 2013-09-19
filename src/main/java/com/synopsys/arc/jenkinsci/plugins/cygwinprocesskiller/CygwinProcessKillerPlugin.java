@@ -27,6 +27,7 @@ import com.cloudbees.jenkins.plugins.customtools.CustomTool;
 import hudson.Plugin;
 import hudson.model.Descriptor;
 import hudson.model.Hudson;
+import hudson.tools.ToolInstallation;
 import java.io.IOException;
 import javax.servlet.ServletException;
 import jenkins.model.Jenkins;
@@ -97,7 +98,7 @@ public class CygwinProcessKillerPlugin extends Plugin {
         return CygwinInstallation.DESCRIPTOR;
     }
     
-    public CustomTool getToolInstallation() {
+    public ToolInstallation getToolInstallation() {
         if (cygwinInstallation == null) {
             return null;
         }
