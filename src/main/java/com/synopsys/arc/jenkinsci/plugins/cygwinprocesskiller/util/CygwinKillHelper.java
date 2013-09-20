@@ -73,13 +73,18 @@ public class CygwinKillHelper {
      * @throws IOException
      * @throws InterruptedException 
      */
-    public boolean isCygwin() throws IOException, InterruptedException {
+    public boolean isCygwin() throws InterruptedException {
         if (!SystemUtils.IS_OS_WINDOWS) {
             return false;
         }
         
         OutputStream str = new ByteArrayOutputStream();
-        execCommand("uname", str, "-a");
+        try { // Catch tool installation exceptions
+            execCommand("uname", str, "-a");
+        } catch (IOException ex) {
+            logError("Cannot check the Cygwin platform. "+ex.getMessage());
+            return false;
+        }
         return str.toString().startsWith(CYGWIN_START_PREFIX);
     }
 
@@ -92,7 +97,6 @@ public class CygwinKillHelper {
     
     public int execScript(String script, OutputStream out, String ... args) 
             throws IOException, InterruptedException {
-        
         // Prepare a temp file
         FilePath tmpFile = getTmpDir().createTempFile("cygwin_process_killer_", ".sh");       
         tmpFile.write(script, null);
@@ -121,7 +125,7 @@ public class CygwinKillHelper {
         int res = execScript(plugin.getKillScript(), str, Integer.toString(procToBeKilled.getPid()));
         
         if (res != 0) {
-            log.error("CygwinKiller cannot kill the process tree (parent pid="+procToBeKilled.getPid()+")");
+            logError("CygwinKiller cannot kill the process tree (parent pid="+procToBeKilled.getPid()+")");
         }
         return res != 0;
     }
@@ -164,10 +168,14 @@ public class CygwinKillHelper {
                 substitutedHome = CygwinToolHelper.getCygwinHome(tool, node, procToBeKilled.getEnvironmentVariables());
             } catch (CustomToolException ex) {
                 String msg = "Cannot install Cygwin from Custom Tools. "+ex.getMessage();
-                log.error(msg);
+                logError(msg);
                 throw new IOException(msg, ex);
             }
         } 
         return substitutedHome;
     }    
+    
+    public void logError(String message) {
+        log.error("["+CygwinProcessKillerPlugin.PLUGIN_NAME+"] - "+message);
+    }
 }

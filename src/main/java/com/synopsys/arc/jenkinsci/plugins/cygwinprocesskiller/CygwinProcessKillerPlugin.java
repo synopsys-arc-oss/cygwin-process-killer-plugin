@@ -44,7 +44,7 @@ public class CygwinProcessKillerPlugin extends Plugin {
     private boolean enableProcessKiller;
     private CygwinInstallation cygwinInstallation;
     
-    private static final String PLUGIN_NAME="cygwin-process";
+    public static final String PLUGIN_NAME="cygwin-process";
     private static final String SCRIPT_PATH="/plugin/"+PLUGIN_NAME+"/scripts/cygwin_killproc.bash";
     private static final int MAX_SCRIPT_SIZE=8192;
     
