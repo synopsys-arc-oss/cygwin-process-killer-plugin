@@ -28,7 +28,6 @@ import hudson.Extension;
 import hudson.model.Computer;
 import hudson.model.Node;
 import hudson.model.TaskListener;
-import hudson.tools.ToolInstallation;
 import hudson.util.LogTaskListener;
 import hudson.util.ProcessKiller;
 import hudson.util.ProcessTree;
@@ -55,7 +54,7 @@ public class CygwinProcessKiller extends ProcessKiller {
         // Init variables
         TaskListener listener = new LogTaskListener(Logger.getLogger(KILLER_LOGGER_NAME), KILLER_LOGGING_LEVEL);
         Node currentNode = Computer.currentComputer().getNode();
-        ToolInstallation tool = plugin.getToolInstallation();
+        CygwinKillerInstallation tool = plugin.getToolInstallation();
         
         // Run helper, which checks platform and then runs kill script
         CygwinKillHelper helper = new CygwinKillHelper(listener, currentNode, tool, process);

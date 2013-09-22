@@ -23,36 +23,14 @@
  */
 package com.synopsys.arc.jenkinsci.plugins.cygwinprocesskiller.util;
 
-import com.synopsys.arc.jenkinsci.plugins.customtools.CustomToolException;
-import com.synopsys.arc.jenkinsci.plugins.customtools.EnvStringParseHelper;
-import hudson.EnvVars;
-import hudson.FilePath;
-import hudson.model.Node;
-import hudson.tools.ToolInstallation;
-import java.io.File;
-
 /**
- * Provides basic methods for Cygwin handling.
+ *
  * @author Oleg Nenashev <nenashev@synopsys.com>, Synopsys Inc.
  */
-public class CygwinToolHelper {
-    public static FilePath getCygwinHome(ToolInstallation tool, Node node, EnvVars additionalVars) 
-            throws CustomToolException
-    {
-        String home = EnvStringParseHelper.resolveExportedPath(tool.getHome(), node);
-        if (additionalVars != null && additionalVars.size() != 0) {
-            home = additionalVars.expand(home);
-        }
-        EnvStringParseHelper.checkStringForMacro("CYGWIN_HOME", home);
-        
-        // Get and check
-        File cygwinHome = new File(home);
-        if (!cygwinHome.exists()) {
-            throw new CustomToolException("Cygwin home directory "+cygwinHome+" does not exist");
-        }
-        if (!cygwinHome.isDirectory() || !cygwinHome.isAbsolute()) {
-            throw new CustomToolException("Cygwin home should be an absolute path to a directory");
-        }
-        return new FilePath(cygwinHome);
-    }           
+public class CygwinKillerException extends Exception {
+
+    public CygwinKillerException(String message) {
+        super(message);
+    }
+    
 }

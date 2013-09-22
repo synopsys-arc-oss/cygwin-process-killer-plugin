@@ -24,45 +24,46 @@
 package com.synopsys.arc.jenkinsci.plugins.cygwinprocesskiller;
 
 import hudson.Extension;
-import hudson.model.Describable;
-import hudson.model.Descriptor;
-import hudson.model.Hudson;
-import java.io.Serializable;
+import hudson.model.Node;
+import hudson.model.TaskListener;
+import hudson.slaves.NodeSpecific;
+import hudson.tools.ToolDescriptor;
+import hudson.tools.ToolInstallation;
+import hudson.tools.ToolProperty;
+import java.io.IOException;
+import java.util.List;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
- * Provides integration with Custom-Tools plug-in.
+ *
  * @author Oleg Nenashev <nenashev@synopsys.com>, Synopsys Inc.
  */
-public class CygwinInstallation implements Serializable, Describable<CygwinInstallation> {
-    private String name;
-
+public class CygwinKillerInstallation extends ToolInstallation implements NodeSpecific<CygwinKillerInstallation> {
     @DataBoundConstructor
-    public CygwinInstallation(String name) {
-        this.name = name;
+    public CygwinKillerInstallation(String name, String home, List<? extends ToolProperty<?>> properties) {
+        super(name, home, properties);
     }
 
-    public String getName() {
-        return name;
-    }
-  
     @Override
-    public Descriptor<CygwinInstallation> getDescriptor() {
-        return DESCRIPTOR;
+    public CygwinKillerInstallation forNode(Node node, TaskListener log) throws IOException, InterruptedException {
+        return new CygwinKillerInstallation(getName(), translateFor(node, log), getProperties());
     }
-     
-    static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
     
     @Extension
-    public static class DescriptorImpl extends Descriptor<CygwinInstallation> {
-
+    public static class DescriptorImpl extends ToolDescriptor<CygwinKillerInstallation> {
+        public DescriptorImpl() {
+            load();
+        }
+       
         @Override
         public String getDisplayName() {
-            return "Cygwin Installation";
+            return "Cygwin Killer";
         }
         
-        public static CygwinKillerInstallation[] getCustomToolInstallations() {
-            return Hudson.getInstance().getDescriptorByType(CygwinKillerInstallation.DescriptorImpl.class).getInstallations();      
+        @Override
+        public void setInstallations(CygwinKillerInstallation... installations) {
+            super.setInstallations(installations);
+            save();
         }
     }
 }

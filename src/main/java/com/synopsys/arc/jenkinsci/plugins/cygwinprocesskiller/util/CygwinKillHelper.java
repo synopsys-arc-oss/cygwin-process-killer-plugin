@@ -23,8 +23,9 @@
  */
 package com.synopsys.arc.jenkinsci.plugins.cygwinprocesskiller.util;
 
-import com.synopsys.arc.jenkinsci.plugins.customtools.CustomToolException;
+import com.synopsys.arc.jenkinsci.plugins.cygwinprocesskiller.CygwinKillerInstallation;
 import com.synopsys.arc.jenkinsci.plugins.cygwinprocesskiller.CygwinProcessKillerPlugin;
+import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.Launcher.ProcStarter;
 import hudson.Proc;
@@ -48,7 +49,7 @@ import org.apache.commons.lang.SystemUtils;
 public class CygwinKillHelper {
     private final TaskListener log;
     private final Node node;
-    private final ToolInstallation tool;
+    private final CygwinKillerInstallation tool;
     private final ProcessTree.OSProcess procToBeKilled;
   
     // On-demand variables 
@@ -60,7 +61,7 @@ public class CygwinKillHelper {
     private static final String CYGWIN_BINARY_PATH="\\bin\\";
     private static final int WAIT_TIMEOUT_SEC=500;
     
-    public CygwinKillHelper(TaskListener log, Node node, ToolInstallation tool, ProcessTree.OSProcess procToBeKilled) {
+    public CygwinKillHelper(TaskListener log, Node node, CygwinKillerInstallation tool, ProcessTree.OSProcess procToBeKilled) {
         this.log = log;
         this.node = node;
         this.tool = tool;
@@ -130,7 +131,7 @@ public class CygwinKillHelper {
         return res != 0;
     }
     
-    private String getCygwinBinaryCommand(String commandName) throws IOException {
+    private String getCygwinBinaryCommand(String commandName) throws IOException, InterruptedException {
         return tool != null ? getSubstitutedHome().getRemote() + CYGWIN_BINARY_PATH + commandName+".exe" : commandName+".exe"; 
     }
     
@@ -162,11 +163,11 @@ public class CygwinKillHelper {
         return envVars;
     }
 
-    public FilePath getSubstitutedHome() throws IOException {
+    public FilePath getSubstitutedHome() throws IOException, InterruptedException {
         if (substitutedHome == null && tool != null) {
             try {
-                substitutedHome = CygwinToolHelper.getCygwinHome(tool, node, procToBeKilled.getEnvironmentVariables());
-            } catch (CustomToolException ex) {
+                substitutedHome = getCygwinHome(procToBeKilled.getEnvironmentVariables());
+            } catch (CygwinKillerException ex) {
                 String msg = "Cannot install Cygwin from Custom Tools. "+ex.getMessage();
                 logError(msg);
                 throw new IOException(msg, ex);
@@ -177,5 +178,24 @@ public class CygwinKillHelper {
     
     public void logError(String message) {
         log.error("["+CygwinProcessKillerPlugin.PLUGIN_NAME+"] - "+message);
+    }
+    
+    public FilePath getCygwinHome(EnvVars additionalVars) 
+            throws CygwinKillerException, IOException, InterruptedException
+    {
+        String home = tool.forNode(node, log).getHome();
+        if (additionalVars != null && additionalVars.size() != 0) {
+            home = additionalVars.expand(home);
+        }
+        
+        // Get and check
+        File cygwinHome = new File(home);
+        if (!cygwinHome.exists()) {
+            throw new CygwinKillerException("Cygwin home directory "+cygwinHome+" does not exist");
+        }
+        if (!cygwinHome.isDirectory() || !cygwinHome.isAbsolute()) {
+            throw new CygwinKillerException("Cygwin home should be an absolute path to a directory");
+        }
+        return new FilePath(cygwinHome);
     }
 }
