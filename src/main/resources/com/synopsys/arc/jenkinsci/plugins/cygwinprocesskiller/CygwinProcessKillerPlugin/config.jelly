@@ -36,7 +36,7 @@
     </f:optionalBlock> 
     
     <f:entry field="killScript" title="killScript">
-        <f:textarea value="${it.killScript}"/>
+        <f:textarea value="${it.killScript}" default="${it.defaultKillScript}"/>
     </f:entry>
   </f:section>
 </j:jelly>

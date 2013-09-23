@@ -26,7 +26,10 @@ package com.synopsys.arc.jenkinsci.plugins.cygwinprocesskiller;
 import hudson.Plugin;
 import hudson.model.Descriptor;
 import hudson.model.Hudson;
+import hudson.util.IOUtils;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringWriter;
 import javax.servlet.ServletException;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
@@ -41,14 +44,19 @@ public class CygwinProcessKillerPlugin extends Plugin {
     private String killScript;
     private boolean enableProcessKiller;
     private CygwinInstallation cygwinInstallation;
+    private transient String defaultKillScript;
     
     public static final String PLUGIN_NAME="cygwin-process";
-    private static final String SCRIPT_PATH="/plugin/"+PLUGIN_NAME+"/scripts/cygwin_killproc.bash";
+    private static final String KILLSCRIPT_NAME="cygwin_killproc.bash";
     private static final int MAX_SCRIPT_SIZE=8192;
     
     
     public String getKillScript() {
         return killScript;
+    }
+    
+    public String getDefaultKillScript() {
+        return defaultKillScript;
     }
 
     public boolean isEnableProcessKiller() {
@@ -77,20 +85,13 @@ public class CygwinProcessKillerPlugin extends Plugin {
         super.load();
     }
     
-    /*@Override
+    @Override
     public void postInitialize() throws Exception {     
-        if (killScript != null) {
-            return;
-        }
-        
-        InputStream istream = ClassLoader.getSystemResourceAsStream(Functions.getResourcePath()+SCRIPT_PATH);
-        if (istream != null) {
-            Reader reader = new InputStreamReader(istream);
-            CharBuffer buf = CharBuffer.allocate(MAX_SCRIPT_SIZE);
-            reader.read(buf);
-            killScript =  buf.toString();  
-        } 
-    } */
+        InputStream str = CygwinProcessKillerPlugin.class.getResourceAsStream(KILLSCRIPT_NAME);
+        StringWriter writer = new StringWriter();
+        IOUtils.copy(str, writer);
+        defaultKillScript = writer.toString();
+    } 
     
     public CygwinInstallation.DescriptorImpl getCygwinInstallationDescriptor() {
         return CygwinInstallation.DESCRIPTOR;
