@@ -24,16 +24,21 @@
 package com.synopsys.arc.jenkinsci.plugins.cygwinprocesskiller;
 
 import com.synopsys.arc.jenkinsci.plugins.cygwinprocesskiller.util.CygwinKillHelper;
+import com.synopsys.arc.jenkinsci.plugins.cygwinprocesskiller.util.CygwinKillerException;
 import hudson.Extension;
 import hudson.model.Computer;
 import hudson.model.Node;
 import hudson.model.TaskListener;
+import hudson.remoting.Callable;
+import hudson.slaves.SlaveComputer;
 import hudson.util.LogTaskListener;
 import hudson.util.ProcessKiller;
 import hudson.util.ProcessTree;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.commons.lang.SystemUtils;
 
 /**
  * Extension, which kills Cygwin process trees.
@@ -46,18 +51,69 @@ public class CygwinProcessKiller extends ProcessKiller {
 
     @Override
     public boolean kill(ProcessTree.OSProcess process) throws IOException, InterruptedException {       
-        CygwinProcessKillerPlugin plugin = CygwinProcessKillerPlugin.Instance();
-        if (!plugin.isEnableProcessKiller()) {
+        if (!SystemUtils.IS_OS_WINDOWS) {
+            return false;
+        } 
+        
+        try {
+            KillReport report = SlaveComputer.getChannelToMaster().call(new KillerRemoteCall(process.getPid()));
+            return report.isKilledSuccessfully();
+        } catch (CygwinKillerException ex) {
+            //TODO: log errors
             return false;
         }
-        
-        // Init variables
-        TaskListener listener = new LogTaskListener(Logger.getLogger(KILLER_LOGGER_NAME), KILLER_LOGGING_LEVEL);
-        Node currentNode = Computer.currentComputer().getNode();
-        CygwinKillerInstallation tool = plugin.getToolInstallation();
-        
-        // Run helper, which checks platform and then runs kill script
-        CygwinKillHelper helper = new CygwinKillHelper(listener, currentNode, tool, process);
-        return helper.isCygwin() ? helper.kill() : false;
     }    
+    
+    
+    public static class KillReport implements Serializable {
+        boolean killedSuccessfully;
+        String errorMessage;
+
+        public KillReport(boolean killedSuccessfully, String errorMessage) {
+            this.killedSuccessfully = killedSuccessfully;
+            this.errorMessage = errorMessage;
+        }
+
+        public boolean isKilledSuccessfully() {
+            return killedSuccessfully;
+        }
+
+        public String getErrorMessage() {
+            return errorMessage;
+        }
+    }
+    
+    public static class KillerRemoteCall implements Callable<KillReport, CygwinKillerException> {
+        private final int processPID;
+
+        public KillerRemoteCall(int processPID) {
+            this.processPID = processPID;
+        }
+        
+        @Override
+        public KillReport call() throws CygwinKillerException {
+            CygwinProcessKillerPlugin plugin = CygwinProcessKillerPlugin.Instance();
+            if (!plugin.isEnableProcessKiller()) {
+                return new KillReport(false, "Killer is disabled");
+            }
+            
+            // Init variables
+            TaskListener listener = new LogTaskListener(Logger.getLogger(KILLER_LOGGER_NAME), KILLER_LOGGING_LEVEL);
+            Node currentNode = Computer.currentComputer().getNode();
+            CygwinKillerInstallation tool = plugin.getToolInstallation();
+
+            // Run helper, which checks platform and then runs kill script
+            CygwinKillHelper helper = new CygwinKillHelper(listener, currentNode, tool, processPID);
+            
+            try {
+                if (!helper.isCygwin()) {
+                   return new KillReport(false, "Cannot locate Cygwin on the host");
+                }
+                       
+                return new KillReport(helper.kill(), null);
+             } catch (Exception ex) {
+                 throw new CygwinKillerException(ex.getMessage());
+             }        
+        }     
+    }
 }

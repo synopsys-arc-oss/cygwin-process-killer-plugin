@@ -50,7 +50,7 @@ public class CygwinKillHelper {
     private final TaskListener log;
     private final Node node;
     private final CygwinKillerInstallation tool;
-    private final ProcessTree.OSProcess procToBeKilled;
+    private final int processPID;
   
     // On-demand variables 
     private FilePath tmpDir;
@@ -61,11 +61,11 @@ public class CygwinKillHelper {
     private static final String CYGWIN_BINARY_PATH="\\bin\\";
     private static final int WAIT_TIMEOUT_SEC=500;
     
-    public CygwinKillHelper(TaskListener log, Node node, CygwinKillerInstallation tool, ProcessTree.OSProcess procToBeKilled) {
+    public CygwinKillHelper(TaskListener log, Node node, CygwinKillerInstallation tool, int processPID) {
         this.log = log;
         this.node = node;
         this.tool = tool;
-        this.procToBeKilled = procToBeKilled;
+        this.processPID = processPID;
         this.substitutedHome = this.tmpDir = null; // will be retrieved on-demand
     }
     
@@ -74,11 +74,7 @@ public class CygwinKillHelper {
      * @throws IOException
      * @throws InterruptedException 
      */
-    public boolean isCygwin() throws InterruptedException {
-        if (!SystemUtils.IS_OS_WINDOWS) {
-            return false;
-        }
-        
+    public boolean isCygwin() throws InterruptedException {        
         OutputStream str = new ByteArrayOutputStream();
         try { // Catch tool installation exceptions
             execCommand("uname", str, "-a");
@@ -106,7 +102,7 @@ public class CygwinKillHelper {
         cmd[0] = tmpFile.getRemote();
         System.arraycopy(args, 0, cmd, 1, args.length);
     
-        return execCommand("sh", out, cmd);     
+        return execCommand("bash", out, cmd);     
     }
     
     public int execCommand(String command, OutputStream stdout, String ... args) throws IOException, InterruptedException {
@@ -123,10 +119,10 @@ public class CygwinKillHelper {
     
     public boolean kill() throws IOException, InterruptedException {
         OutputStream str = new ByteArrayOutputStream();
-        int res = execScript(plugin.getKillScript(), str, Integer.toString(procToBeKilled.getPid()));
+        int res = execScript(plugin.getKillScript(), str, Integer.toString(processPID));
         
         if (res != 0) {
-            logError("CygwinKiller cannot kill the process tree (parent pid="+procToBeKilled.getPid()+")");
+            logError("CygwinKiller cannot kill the process tree (parent pid="+processPID+")");
         }
         return res != 0;
     }
@@ -166,7 +162,7 @@ public class CygwinKillHelper {
     public FilePath getSubstitutedHome() throws IOException, InterruptedException {
         if (substitutedHome == null && tool != null) {
             try {
-                substitutedHome = getCygwinHome(procToBeKilled.getEnvironmentVariables());
+                substitutedHome = getCygwinHome(null);
             } catch (CygwinKillerException ex) {
                 String msg = "Cannot install Cygwin from Custom Tools. "+ex.getMessage();
                 logError(msg);
