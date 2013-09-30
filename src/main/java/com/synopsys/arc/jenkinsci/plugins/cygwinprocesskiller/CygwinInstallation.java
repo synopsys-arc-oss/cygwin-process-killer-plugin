@@ -55,7 +55,6 @@ public class CygwinInstallation implements Serializable, Describable<CygwinInsta
     
     @Extension
     public static class DescriptorImpl extends Descriptor<CygwinInstallation> {
-
         @Override
         public String getDisplayName() {
             return "Cygwin Installation";

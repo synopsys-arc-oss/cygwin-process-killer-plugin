@@ -25,14 +25,13 @@ package com.synopsys.arc.jenkinsci.plugins.cygwinprocesskiller.util;
 
 import com.synopsys.arc.jenkinsci.plugins.cygwinprocesskiller.CygwinKillerInstallation;
 import com.synopsys.arc.jenkinsci.plugins.cygwinprocesskiller.CygwinProcessKillerPlugin;
+import com.synopsys.arc.jenkinsci.plugins.cygwinprocesskiller.Messages;
 import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.Launcher.ProcStarter;
 import hudson.Proc;
 import hudson.model.Node;
 import hudson.model.TaskListener;
-import hudson.tools.ToolInstallation;
-import hudson.util.ProcessTree;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -40,7 +39,6 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.io.output.ByteArrayOutputStream;
-import org.apache.commons.lang.SystemUtils;
 
 /**
  * Class provides basic Cygwin operations.
@@ -79,7 +77,7 @@ public class CygwinKillHelper {
         try { // Catch tool installation exceptions
             execCommand("uname", str, "-a");
         } catch (IOException ex) {
-            logError("Cannot check the Cygwin platform. "+ex.getMessage());
+            logError(Messages.Message_CygwinCheckFailed() + ex.getMessage());
             return false;
         }
         return str.toString().startsWith(CYGWIN_START_PREFIX);
@@ -164,7 +162,7 @@ public class CygwinKillHelper {
             try {
                 substitutedHome = getCygwinHome(null);
             } catch (CygwinKillerException ex) {
-                String msg = "Cannot install Cygwin from Custom Tools. "+ex.getMessage();
+                String msg = Messages.Message_InstallationFailed() + ex.getMessage();
                 logError(msg);
                 throw new IOException(msg, ex);
             }

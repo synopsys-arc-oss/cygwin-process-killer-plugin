@@ -57,7 +57,7 @@ public class CygwinKillerInstallation extends ToolInstallation implements NodeSp
        
         @Override
         public String getDisplayName() {
-            return "Cygwin Killer";
+            return Messages.CygwinKillerInstallation_DisplayName();
         }
         
         @Override

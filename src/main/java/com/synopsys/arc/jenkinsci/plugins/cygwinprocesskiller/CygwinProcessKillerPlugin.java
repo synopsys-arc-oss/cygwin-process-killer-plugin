@@ -47,9 +47,7 @@ public class CygwinProcessKillerPlugin extends Plugin {
     private transient String defaultKillScript;
     
     public static final String PLUGIN_NAME="cygwin-process";
-    private static final String KILLSCRIPT_NAME="cygwin_killproc.bash";
-    private static final int MAX_SCRIPT_SIZE=8192;
-    
+    private static final String KILLSCRIPT_NAME="cygwin_killproc.bash";    
     
     public String getKillScript() {
         return killScript;

@@ -25,10 +25,7 @@ package com.synopsys.arc.jenkinsci.plugins.cygwinprocesskiller;
 
 import com.synopsys.arc.jenkinsci.plugins.cygwinprocesskiller.util.CygwinKillHelper;
 import com.synopsys.arc.jenkinsci.plugins.cygwinprocesskiller.util.CygwinKillerException;
-import hudson.EnvVars;
 import hudson.Extension;
-import hudson.model.Computer;
-import hudson.model.Environment;
 import hudson.model.Hudson;
 import hudson.model.Node;
 import hudson.model.TaskListener;
@@ -99,7 +96,7 @@ public class CygwinProcessKiller extends ProcessKiller {
         public KillReport call() throws CygwinKillerException {
             CygwinProcessKillerPlugin plugin = CygwinProcessKillerPlugin.Instance();
             if (!plugin.isEnableProcessKiller()) {
-                return new KillReport(false, "Killer is disabled");
+                return new KillReport(false, Messages.Message_KillerIsDisabled());
             }
             
             // Init variables
@@ -113,7 +110,7 @@ public class CygwinProcessKiller extends ProcessKiller {
             
             try {
                 if (!helper.isCygwin()) {
-                   return new KillReport(false, "Cannot locate Cygwin on the host");
+                   return new KillReport(false, Messages.Message_CygwinCheckFailed());
                 }                    
                 return new KillReport(helper.kill(), null);
              } catch (Exception ex) {

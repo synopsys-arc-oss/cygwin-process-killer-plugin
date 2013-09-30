@@ -1,5 +1,9 @@
 ###
 #!/bin/bash
+# Script kill Cygwin process tree.
+# In order to work properly, script should be launched by Cygwin DLL, which
+# executes target script.
+#
 # License: cc-wiki with attribution required
 # Code source: http://stackoverflow.com/questions/523878/how-to-terminate-scripts-process-tree-in-cygwin-bash-from-bash-script
 # Authors: Adam Rosenfield, Barry Kelly
