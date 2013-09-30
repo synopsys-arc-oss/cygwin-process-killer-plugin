@@ -25,11 +25,15 @@ package com.synopsys.arc.jenkinsci.plugins.cygwinprocesskiller;
 
 import com.synopsys.arc.jenkinsci.plugins.cygwinprocesskiller.util.CygwinKillHelper;
 import com.synopsys.arc.jenkinsci.plugins.cygwinprocesskiller.util.CygwinKillerException;
+import hudson.EnvVars;
 import hudson.Extension;
 import hudson.model.Computer;
+import hudson.model.Environment;
+import hudson.model.Hudson;
 import hudson.model.Node;
 import hudson.model.TaskListener;
 import hudson.remoting.Callable;
+import hudson.remoting.Channel;
 import hudson.slaves.SlaveComputer;
 import hudson.util.LogTaskListener;
 import hudson.util.ProcessKiller;
@@ -85,6 +89,7 @@ public class CygwinProcessKiller extends ProcessKiller {
     
     public static class KillerRemoteCall implements Callable<KillReport, CygwinKillerException> {
         private final int processPID;
+       
 
         public KillerRemoteCall(int processPID) {
             this.processPID = processPID;
@@ -99,17 +104,17 @@ public class CygwinProcessKiller extends ProcessKiller {
             
             // Init variables
             TaskListener listener = new LogTaskListener(Logger.getLogger(KILLER_LOGGER_NAME), KILLER_LOGGING_LEVEL);
-            Node currentNode = Computer.currentComputer().getNode();
+            String nodeName = Channel.current().getName();        
+            Node targetNode = Hudson.getInstance().getNode(nodeName);
             CygwinKillerInstallation tool = plugin.getToolInstallation();
 
             // Run helper, which checks platform and then runs kill script
-            CygwinKillHelper helper = new CygwinKillHelper(listener, currentNode, tool, processPID);
+            CygwinKillHelper helper = new CygwinKillHelper(listener, targetNode, tool, processPID);
             
             try {
                 if (!helper.isCygwin()) {
                    return new KillReport(false, "Cannot locate Cygwin on the host");
-                }
-                       
+                }                    
                 return new KillReport(helper.kill(), null);
              } catch (Exception ex) {
                  throw new CygwinKillerException(ex.getMessage());
