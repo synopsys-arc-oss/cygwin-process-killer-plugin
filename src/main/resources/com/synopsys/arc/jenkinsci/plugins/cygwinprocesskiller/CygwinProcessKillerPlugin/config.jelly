@@ -35,7 +35,7 @@
         <st:include from="${descriptor}" page="${descriptor.configPage}"/>
     </f:optionalBlock> 
     
-    <f:entry field="killScript" title="killScript">
+    <f:entry field="killScript" title="${%Kill Script}">
         <f:textarea value="${it.killScript}" default="${it.defaultKillScript}"/>
     </f:entry>
   </f:section>

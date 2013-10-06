@@ -46,7 +46,7 @@ public class CygwinKillerInstallation extends ToolInstallation implements NodeSp
 
     @Override
     public CygwinKillerInstallation forNode(Node node, TaskListener log) throws IOException, InterruptedException {
-        return new CygwinKillerInstallation(getName(), translateFor(node, log), getProperties());
+        return new CygwinKillerInstallation(getName(), translateFor(node, log), getProperties().toList());
     }
     
     @Extension
