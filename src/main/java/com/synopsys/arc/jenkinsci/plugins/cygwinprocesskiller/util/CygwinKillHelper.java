@@ -32,6 +32,7 @@ import hudson.Launcher.ProcStarter;
 import hudson.Proc;
 import hudson.model.Node;
 import hudson.model.TaskListener;
+import hudson.remoting.Channel;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -181,15 +182,17 @@ public class CygwinKillHelper {
         if (additionalVars != null && additionalVars.size() != 0) {
             home = additionalVars.expand(home);
         }
-        
+               
         // Get and check
+        //TODO: check for cygwinHome.isDirectory() and existense
         File cygwinHome = new File(home);
-        if (!cygwinHome.exists()) {
+        /*if (!cygwinHome.exists()) {
             throw new CygwinKillerException("Cygwin home directory "+cygwinHome+" does not exist");
-        }
-        if (!cygwinHome.isDirectory() || !cygwinHome.isAbsolute()) {
+        } 
+        
+        if (!cygwinHome.isAbsolute()) {
             throw new CygwinKillerException("Cygwin home should be an absolute path to a directory");
-        }
+        } */
         return new FilePath(cygwinHome);
     }
 }
