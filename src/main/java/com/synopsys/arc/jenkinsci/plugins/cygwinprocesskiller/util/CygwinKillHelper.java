@@ -32,7 +32,6 @@ import hudson.Launcher.ProcStarter;
 import hudson.Proc;
 import hudson.model.Node;
 import hudson.model.TaskListener;
-import hudson.remoting.Channel;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -76,7 +75,7 @@ public class CygwinKillHelper {
     public boolean isCygwin() throws InterruptedException {        
         OutputStream str = new ByteArrayOutputStream();
         try { // Catch tool installation exceptions
-            execCommand("uname", str, "-a");
+            execCommand("uname", str, str, "-a");
         } catch (IOException ex) {
             logError(Messages.Message_CygwinCheckFailed() + ex.getMessage());
             return false;
@@ -101,21 +100,32 @@ public class CygwinKillHelper {
         cmd[0] = tmpFile.getRemote();
         System.arraycopy(args, 0, cmd, 1, args.length);
     
-        return execCommand("bash", out, cmd);     
+        return execCommand("bash", out, out, cmd);     
     }
-    
-    public int execCommand(String command, OutputStream stdout, String ... args) throws IOException, InterruptedException {
+
+    /**
+     * Executes command with specified arguments.
+     * @param command Command to be executed
+     * @param stdout Output stream for STDOUT
+     * @param stderr Output stream for STDERR
+     * @param args Arguments to be passed
+     * @return exit code of the triggered command
+     * @throws IOException 
+     * @throws InterruptedException Execution has been interrupted
+     */
+    public int execCommand(String command, OutputStream stdout, OutputStream stderr, String ... args) throws IOException, InterruptedException {
         String[] cmd = new String[1+args.length];
         cmd[0] = getCygwinBinaryCommand(command);
         System.arraycopy(args, 0, cmd, 1, args.length);
     
-        ProcStarter starter = node.createLauncher(log).launch().cmds(cmd).envs(constructVariables()).stdout(stdout).pwd(getTmpDir());
+        ProcStarter starter = node.createLauncher(log).launch().cmds(cmd).envs(constructVariables()).stdout(stdout).stderr(stderr).pwd(getTmpDir());
         Proc proc = starter.start();
         int resultCode = proc.joinWithTimeout(WAIT_TIMEOUT_SEC, TimeUnit.SECONDS, log);
         starter.readStdout();
         return resultCode;
     }
-    
+
+    /**Terminates process by PID*/
     public boolean kill() throws IOException, InterruptedException {
         OutputStream str = new ByteArrayOutputStream();
         int res = execScript(plugin.getKillScript(), str, Integer.toString(processPID));
@@ -171,7 +181,7 @@ public class CygwinKillHelper {
         return substitutedHome;
     }    
     
-    public void logError(String message) {
+    private void logError(String message) {
         log.error("["+CygwinProcessKillerPlugin.PLUGIN_NAME+"] - "+message);
     }
     
@@ -189,7 +199,6 @@ public class CygwinKillHelper {
         /*if (!cygwinHome.exists()) {
             throw new CygwinKillerException("Cygwin home directory "+cygwinHome+" does not exist");
         } 
-        
         if (!cygwinHome.isAbsolute()) {
             throw new CygwinKillerException("Cygwin home should be an absolute path to a directory");
         } */
