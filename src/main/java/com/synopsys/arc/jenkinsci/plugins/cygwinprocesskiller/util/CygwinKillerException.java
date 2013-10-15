@@ -24,7 +24,7 @@
 package com.synopsys.arc.jenkinsci.plugins.cygwinprocesskiller.util;
 
 /**
- * Exception for Cygwin operations.
+ * Exception for Cygwin Killer operations.
  * @author Oleg Nenashev <nenashev@synopsys.com>, Synopsys Inc.
  */
 public class CygwinKillerException extends Exception {

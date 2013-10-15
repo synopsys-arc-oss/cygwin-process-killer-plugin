@@ -67,8 +67,8 @@ public class CygwinProcessKiller extends ProcessKiller {
     
     
     public static class KillReport implements Serializable {
-        boolean killedSuccessfully;
-        String errorMessage;
+        private boolean killedSuccessfully;
+        private String errorMessage;
 
         public KillReport(boolean killedSuccessfully, String errorMessage) {
             this.killedSuccessfully = killedSuccessfully;
@@ -87,7 +87,6 @@ public class CygwinProcessKiller extends ProcessKiller {
     public static class KillerRemoteCall implements Callable<KillReport, CygwinKillerException> {
         private final int processPID;
        
-
         public KillerRemoteCall(int processPID) {
             this.processPID = processPID;
         }
