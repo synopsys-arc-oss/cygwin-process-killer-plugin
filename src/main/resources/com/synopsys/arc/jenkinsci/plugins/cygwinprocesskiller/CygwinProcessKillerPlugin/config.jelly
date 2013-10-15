@@ -23,20 +23,25 @@
  -->
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:sl="/hudson/plugins/sidebar_link">
+  <j:set var="helpRoot" value="/plugin/cygwin-process-killer/help/CygwinProcessKillerPlugin"/>
   <f:section title="${%Cygwin process killer}" description="${%Configuration of the Cygwin Process Killer plugin}">
-    <f:entry title="${%Enable killer}" field="enableProcessKiller">
-        <f:checkbox checked="${it.enableProcessKiller}" title="Enables the Cygwin Process Killer"/>
+    <f:entry title="${%Enable killer}" 
+             field="enableProcessKiller"
+            help="${helpRoot}/help-enableKillerCheckbox.html">
+        <f:checkbox checked="${it.enableProcessKiller}" 
+                    title="${%Enables the Cygwin Process Killer}"/>
     </f:entry>
     <f:optionalBlock name="cygwinInstallation" 
-                     title="${%Use Cygwin from a custom tool}"
-                     checked="${it.cygwinInstallation != null}">
+                     title="${%Use Cygwin from a tool installation}"
+                     checked="${it.cygwinInstallation != null}"
+                     help="${helpRoot}/help-toolInstallationChechbox.html">
         <j:set var="descriptor" value="${it.cygwinInstallationDescriptor}"/>
         <j:set var="instance" value="${it.cygwinInstallation}"/>
         <st:include from="${descriptor}" page="${descriptor.configPage}"/>
     </f:optionalBlock> 
     
     <f:advanced title="${%Manage termination script}" align="left">
-        <f:entry title="${%Kill Script}" help="/plugin/cygwin-process-killer/help/CygwinProcessKillerPlugin/help-killScript.html"/>
+        <f:entry title="${%Kill Script}" help="${helpRoot}/help-killScript.html"/>
         <f:entry field="killScript"> 
             <f:textarea value="${it.killScript}" default="${it.defaultKillScript}"/>
         </f:entry>

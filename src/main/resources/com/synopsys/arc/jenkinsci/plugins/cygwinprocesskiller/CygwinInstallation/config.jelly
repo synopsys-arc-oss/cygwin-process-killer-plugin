@@ -23,7 +23,8 @@ THE SOFTWARE.
 -->
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
-    <f:entry title="${%Tool selection}">
+    <f:entry title="${%Tool selection}"
+             help="/plugin/cygwin-process-killer/help/CygwinInstallation/help-toolName.html">
         <select class="setting-input" name="selectedTool.name">
             <j:forEach var="installation" items="${descriptor.customToolInstallations}">
                 <f:option selected="${installation.name==customToolSelection.name}" 
