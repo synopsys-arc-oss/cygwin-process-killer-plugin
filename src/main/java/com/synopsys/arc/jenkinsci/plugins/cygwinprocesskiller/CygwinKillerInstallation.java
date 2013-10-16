@@ -35,7 +35,7 @@ import java.util.List;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
- * Allows management of Cygwin installations for process killer.
+ * Allows Cygwin installations management for the process killer.
  * @author Oleg Nenashev <nenashev@synopsys.com>, Synopsys Inc.
  */
 public class CygwinKillerInstallation extends ToolInstallation implements NodeSpecific<CygwinKillerInstallation> {

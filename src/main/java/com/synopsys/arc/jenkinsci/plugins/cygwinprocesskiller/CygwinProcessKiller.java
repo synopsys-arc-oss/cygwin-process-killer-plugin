@@ -43,6 +43,7 @@ import org.apache.commons.lang.SystemUtils;
 
 /**
  * Extension, which kills Cygwin process trees.
+ * Most of the extension;s functionality will be launched on Jenkins master's side.
  * @author Oleg Nenashev <nenashev@synopsys.com>, Synopsys Inc.
  */
 @Extension
@@ -60,12 +61,11 @@ public class CygwinProcessKiller extends ProcessKiller {
             KillReport report = SlaveComputer.getChannelToMaster().call(new KillerRemoteCall(process.getPid()));
             return report.isKilledSuccessfully();
         } catch (CygwinKillerException ex) {
-            //TODO: log errors
+            //TODO: log errors in the local log
             return false;
         }
     }    
-    
-    
+        
     public static class KillReport implements Serializable {
         private boolean killedSuccessfully;
         private String errorMessage;

@@ -42,8 +42,10 @@ import org.apache.commons.io.output.ByteArrayOutputStream;
 
 /**
  * Class provides basic Cygwin operations.
+ * This class is designed to be launched on the master only.
  * @author Oleg Nenashev <nenashev@synopsys.com>, Synopsys Inc.
  */
+//TODO: Logging
 public class CygwinKillHelper {
     private final TaskListener log;
     private final Node node;
@@ -83,13 +85,22 @@ public class CygwinKillHelper {
         return str.toString().startsWith(CYGWIN_START_PREFIX);
     }
 
-    public FilePath getTmpDir() throws IOException, InterruptedException {
+    private FilePath getTmpDir() throws IOException, InterruptedException {
         if (tmpDir == null) {
             tmpDir = findTmpDir(node);
         }
         return tmpDir;
     }
     
+    /**
+     * Executes script on the target host.
+     * @param script Script to be executed
+     * @param out Output stream, which returns both stderr and stdout
+     * @param args Script arguments
+     * @return return code of the script
+     * @throws IOException
+     * @throws InterruptedException 
+     */
     public int execScript(String script, OutputStream out, String ... args) 
             throws IOException, InterruptedException {
         // Prepare a temp file
@@ -125,7 +136,9 @@ public class CygwinKillHelper {
         return resultCode;
     }
 
-    /**Terminates process by PID*/
+    /**
+     * Terminates process by PID, which has been provided in the constructor.
+     */
     public boolean kill() throws IOException, InterruptedException {
         OutputStream str = new ByteArrayOutputStream();
         int res = execScript(plugin.getKillScript(), str, Integer.toString(processPID));
@@ -168,7 +181,7 @@ public class CygwinKillHelper {
         return envVars;
     }
 
-    public FilePath getSubstitutedHome() throws IOException, InterruptedException {
+    private FilePath getSubstitutedHome() throws IOException, InterruptedException {
         if (substitutedHome == null && tool != null) {
             try {
                 substitutedHome = getCygwinHome(null);
@@ -185,7 +198,7 @@ public class CygwinKillHelper {
         log.error("["+CygwinProcessKillerPlugin.PLUGIN_NAME+"] - "+message);
     }
     
-    public FilePath getCygwinHome(EnvVars additionalVars) 
+    private FilePath getCygwinHome(EnvVars additionalVars) 
             throws CygwinKillerException, IOException, InterruptedException
     {
         String home = tool.forNode(node, log).getHome();

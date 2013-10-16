@@ -31,7 +31,7 @@ import java.io.Serializable;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
- * Provides integration with Custom-Tools plug-in.
+ * Provides description of the tool to be used.
  * @author Oleg Nenashev <nenashev@synopsys.com>, Synopsys Inc.
  */
 public class CygwinInstallation implements Serializable, Describable<CygwinInstallation> {
